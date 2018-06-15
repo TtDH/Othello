@@ -1,0 +1,4 @@
+WHITE,4,3
+BLACK,3,3
+you,0,4
+me,3,0
