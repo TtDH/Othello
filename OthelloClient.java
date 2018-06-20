@@ -4,6 +4,7 @@ import java.util.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
+import java.util.Random;
 
 public class OthelloClient extends JFrame{
     final static int BLACK = 1;
@@ -50,7 +51,7 @@ public class OthelloClient extends JFrame{
 			new ActionListener(){
 				public void actionPerformed(ActionEvent e){
 				    if(tf.getText().equals("quit")){
-					System.exit(0);
+						System.exit(0);
 				    }
 				    //sayMessage(tf.getText());
 				    pw.println("SAY "+tf.getText());
@@ -87,11 +88,31 @@ public class OthelloClient extends JFrame{
 		pw.flush();
     }
 
+/*
+	int canPut(int x, int y){
+		int res = 0;
+		if(!(board[x][y]==0))return false;
+		int dx,dy;
+		for(int i=0; i<=8; i++){
+			dx = (int)(Math.sqrt(2) * Math.cos(i*Math.toRadians(45)));
+			dy = (int)(Math.sqrt(2) * Math.sin(i*Math.toRadians(45)));
+			if(!(board[x+dx][y+dy] == -1*color))continue;
+			for(int j=2; j<=8; j++){
+				if(board[x+j*dx][y+j*dy] == 0)break;
+				else(board[x+j*dx][y+j*dy] == color){
+
+				}
+			}
+		}
+	}
+*/
+
     byte[][] getBoard(){
 		return board;
     }
 
     private void mainLoop(){
+		Random rand = new Random();
 		try{
 		    pw.println("NICK "+username);
 		    pw.flush();
@@ -107,11 +128,16 @@ public class OthelloClient extends JFrame{
 				String message = br.readLine();
 				stn = new StringTokenizer(message," ",false);
 				String com = stn.nextToken();
+
+				int x = rand.nextInt(8);
+				int y = rand.nextInt(8);
+				putPiece(x,y);
+
+
 				if(com.equals("SAY")){
 				    setMessage(message.substring(4));
 				    continue;
 				}
-
 				if(com.equals("BOARD")){
 				    for(int i=0;i<8;i++){
 						for(int j=0;j<8;j++){

@@ -1,4 +1,7 @@
-WHITE,4,3
-BLACK,3,3
-you,0,4
-me,3,0
+WHITE,6,3
+titi,0,1
+gen,1,1
+takano,1,1
+BLACK,4,4
+you,1,10
+me,8,1
