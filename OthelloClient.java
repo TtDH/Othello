@@ -19,7 +19,9 @@ public class OthelloClient extends JFrame{
     private JTextArea ta;
     private JLabel label;
     private OthelloCanvas canvas;
-    private String username = "";
+	private String username = "";
+	
+	public ArrayList<GameNode> array = new ArrayList<GameNode>();
 
     public OthelloClient(String host, int port, String username) {
 		this.username = username;
@@ -88,31 +90,13 @@ public class OthelloClient extends JFrame{
 		pw.flush();
     }
 
-/*
-	int canPut(int x, int y){
-		int res = 0;
-		if(!(board[x][y]==0))return false;
-		int dx,dy;
-		for(int i=0; i<=8; i++){
-			dx = (int)(Math.sqrt(2) * Math.cos(i*Math.toRadians(45)));
-			dy = (int)(Math.sqrt(2) * Math.sin(i*Math.toRadians(45)));
-			if(!(board[x+dx][y+dy] == -1*color))continue;
-			for(int j=2; j<=8; j++){
-				if(board[x+j*dx][y+j*dy] == 0)break;
-				else(board[x+j*dx][y+j*dy] == color){
-
-				}
-			}
-		}
-	}
-*/
-
     byte[][] getBoard(){
 		return board;
-    }
+	}
 
     private void mainLoop(){
 		Random rand = new Random();
+		array.add(new GameNode(board, 0, color));
 		try{
 		    pw.println("NICK "+username);
 		    pw.flush();
@@ -128,12 +112,7 @@ public class OthelloClient extends JFrame{
 				String message = br.readLine();
 				stn = new StringTokenizer(message," ",false);
 				String com = stn.nextToken();
-
-				int x = rand.nextInt(8);
-				int y = rand.nextInt(8);
-				putPiece(x,y);
-
-
+				
 				if(com.equals("SAY")){
 				    setMessage(message.substring(4));
 				    continue;
@@ -150,7 +129,6 @@ public class OthelloClient extends JFrame{
 				    //System.out.println(message);
 				    label.setText(message);
 				    //setMessage("==System==:"+message);
-
 				    continue;
 				}if(com.equals("CLOSE")){
 				    label.setText(message);
@@ -164,6 +142,13 @@ public class OthelloClient extends JFrame{
 				    }
 				    continue;
 				}
+
+				/*
+					// put randomly
+					int x = rand.nextInt(8);
+					int y = rand.nextInt(8);
+					putPiece(x,y);
+				*/
 
 				System.out.println(message);
 		    }

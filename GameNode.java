@@ -1,18 +1,22 @@
+import java.util.ArrayList;
+
 class GameNode{
-    final static int BLACK = 1;
-    final static int WHITE = -1;
-    private int color = BLACK;
+    private static OthelloClient oc;
+    final static byte BLACK = 1;
+    final static byte WHITE = -1;
+    private static byte color = BLACK;
+    private ArrayList<GameNode> array;
 
     private byte[][] board = {
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,-1,1,0,0,0},
-            {0,0,0,1,-1,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-            {0,0,0,0,0,0,0,0},
-        };;
+        {0,0,0,0,0,0,0,-1},
+        {0,0,0,0,0,1,0,-1},
+        {0,1,0,0,1,1,1,-1},
+        {0,-1,1,-1,-1,-1,0,1},
+        {0,0,-1,1,-1,1,1,1},
+        {0,0,1,-1,1,1,0,0},
+        {0,1,1,0,0,1,0,0},
+        {0,-1,1,0,0,0,0,0},
+    };
     private int depth;
     private int eval;
 	static final byte[][] evalBoard = {
@@ -26,16 +30,28 @@ class GameNode{
 		{30,-12,0,-1,-1,0,-12,30},
 	};
 
-    GameNode(){
-        for(int i=0; i<8; i++){
-            for(int j=0; j<8; j++)canPut(i,j);
+    GameNode(int d){
+        depth = d;
+        // System.out.println("color: "+ color);
+        // System.out.println("byte: " + (byte)(color*Math.pow(-1, depth)));
+        
+        for(int r=0; r<8; r++){
+            for(int c=0; c<8; c++){
+                if(canPut(r, c, (byte)(color*Math.pow(-1, depth)))){
+                    printBoard(put(r, c, (byte)(color*Math.pow(-1, depth))));
+                }
+            }
         }
     }
     
-    GameNode(byte[][] b, int d){
-        board = b;
+    // 初回生成時のみ
+    GameNode(byte[][] b, int d, byte c){
+        board = b;  // ShallowCopy
         depth = d;
+        color = c;
         evalBoard();
+        array = new ArrayList<GameNode>();
+        createNode();
     }
 
 	void evalBoard(){
@@ -48,40 +64,75 @@ class GameNode{
 		eval = res;
 	}
 
-    boolean canPut(int x, int y){
+    boolean canPut(int r, int c, byte putColor){
 		boolean res = false;
-		if(!(board[x][y]==0))return false;
-		int dx,dy;
-		for(int i=0; i<8; i++){
+		if(!(board[r][c]==0))return false;
+		int dr,dc;
+		for(int i=0; i<9; i++){
             if(res)break;
-			dx = (int)(Math.sqrt(2) * Math.cos(i*Math.toRadians(45)));
-			dy = (int)(Math.sqrt(2) * Math.sin(i*Math.toRadians(45)));
-			if(0<=x+dx && x+dx<8 && 0<=y+dy && y+dy<8 && !(board[x+dx][y+dy] == -1*color))continue;
+			dr = (int)((Math.sqrt(2)+0.1) * Math.sin(Math.toRadians(i*45)));
+            dc = (int)((Math.sqrt(2)+0.1) * Math.cos(Math.toRadians(i*45)));
+            // r+dr,c+dcがOutOfBoundsあるいは
+            // r+dr,c+dcの位置のコマが相手の色でないならばcontinue
+			if(!(0<=r+dr && r+dr<8 && 0<=c+dc && c+dc<8) || !(board[r+dr][c+dc] == -1*putColor))continue;
 			for(int j=2; j<8; j++){
-				if(!(0<=x+dx && x+dx<8 && 0<=y+dy && y+dy<8) || board[x+j*dx][y+j*dy] == 0)break;
-				else if(board[x+j*dx][y+j*dy] == color){
+                if(!(0<=r+j*dr && r+j*dr<8 && 0<=c+j*dc && c+j*dc<8))break;
+                if(board[r+j*dr][c+j*dc] == 0)break;    // OutOfBouds避け
+				else if(board[r+j*dr][c+j*dc] == putColor){
                     res = true;
                     break;
 				}
 			}
 		}
-        if(res)System.out.println("can put: " + x + " " + y);
+        if(res)System.out.println("can put: " + r + " " + c);
         return res;
 	}
 
-    void put(int x, int y){
-        
+    /**
+     * x,yに石を置いた時の盤面をディープコピーして返す関数
+     */
+    byte[][] put(int r, int c, byte putColor){
+        byte[][] boardCopy = new byte[8][];
+        for(int i=0; i<8; i++){
+            boardCopy[i] = board[i].clone();
+        }
+        boardCopy[r][c] = putColor;
+        int dr,dc;
+		for(int i=0; i<9; i++){
+			dr = (int)((Math.sqrt(2)+0.1) * Math.sin(Math.toRadians(i*45)));
+            dc = (int)((Math.sqrt(2)+0.1) * Math.cos(Math.toRadians(i*45)));
+            // r+dr,c+dcがOutOfBoundsあるいは
+            // r+dr,c+dcの位置のコマが相手の色でないならばcontinue
+			if(!(0<=r+dr && r+dr<8 && 0<=c+dc && c+dc<8) || !(boardCopy[r+dr][c+dc] == -1*putColor))continue;
+			for(int j=2; j<8; j++){
+                if(!(0<=r+j*dr && r+j*dr<8 && 0<=c+j*dc && c+j*dc<8))break;
+                if(boardCopy[r+j*dr][c+j*dc] == 0)break;    // OutOfBouds避けに条件文分割
+				else if(boardCopy[r+j*dr][c+j*dc] == putColor){
+                    for(int k=1; k<=j; k++)boardCopy[r+k*dr][c+k*dc] = putColor;
+                    break;
+				}
+			}
+		}
+        return boardCopy;
     }
 
-    GameNode createNode(){
-        for(int i=0; i<8; i++){
-            for(int j=0; j<8; j++){
-                if(canPut(i,j))
+    void printBoard(byte[][] board){
+        for(byte[] bytes : board){
+            for(byte b : bytes)System.out.printf("%2d ", b);
+            System.out.println("");            
+        }
+    }
+
+    void createNode(){
+        for(int r=0; r<8; r++){
+            for(int c=0; c<8; c++){
+                if(canPut(r, c, (byte)(color*Math.pow(-1,depth))))
+                    array.add(new GameNode(put(r, c, (byte)(color*Math.pow(-1,depth))), depth+1, color));
             }
         }
     }
 
     public static void main(String args[]){
-        new GameNode();
+        new GameNode(Integer.parseInt(args[0]));
     }
 }
