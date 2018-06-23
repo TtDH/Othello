@@ -6,17 +6,10 @@ class GameNode{
     final static byte WHITE = -1;
     private static byte color = BLACK;
     private ArrayList<GameNode> array;
+    private int putPosC;
+    private int putPosR;
 
-    private byte[][] board = {
-        {0,0,0,0,0,0,0,-1},
-        {0,0,0,0,0,1,0,-1},
-        {0,1,0,0,1,1,1,-1},
-        {0,-1,1,-1,-1,-1,0,1},
-        {0,0,-1,1,-1,1,1,1},
-        {0,0,1,-1,1,1,0,0},
-        {0,1,1,0,0,1,0,0},
-        {0,-1,1,0,0,0,0,0},
-    };
+    private byte[][] board;
     private int depth;
     private int eval;
 	static final byte[][] evalBoard = {
@@ -30,39 +23,81 @@ class GameNode{
 		{30,-12,0,-1,-1,0,-12,30},
 	};
 
-    GameNode(int d){
+    // テスト用、colorの設定はあくまで初回生成時のみ
+    /*
+    GameNode(int d, byte color, boolean bool, int ppr, int ppc){
         depth = d;
-        // System.out.println("color: "+ color);
-        // System.out.println("byte: " + (byte)(color*Math.pow(-1, depth)));
-        
-        for(int r=0; r<8; r++){
-            for(int c=0; c<8; c++){
-                if(canPut(r, c, (byte)(color*Math.pow(-1, depth)))){
-                    printBoard(put(r, c, (byte)(color*Math.pow(-1, depth))));
-                }
+        this.color = color;
+        setEval();
+        array = new ArrayList<GameNode>();
+        putPosR = ppr;
+        putPosC = ppc;
+        if(bool){
+            createNode();
+            for (GameNode gn : array) {
+                gn.printBoard();    
             }
         }
     }
+    */
+    // 空生成用コンストラクタ
+    GameNode(){};
     
-    // 初回生成時のみ
+    // root生成時に使うコンストラクタ
     GameNode(byte[][] b, int d, byte c){
         board = b;  // ShallowCopy
         depth = d;
         color = c;
-        evalBoard();
+        setEval();
         array = new ArrayList<GameNode>();
         createNode();
+        // for(GameNode gn : array){
+            // System.out.println("\teval: " + gn.getEval());
+        // }
+        // System.out.println("return Node's eval: " + returnGameNode().getEval());
     }
 
-	void evalBoard(){
-		int res = 0;
+    // root以外の生成時に使うコンストラクタ
+    GameNode(byte[][] b, int d, int ppr, int ppc, boolean bool){
+        board = b;
+        setEval();
+        depth = d;
+        putPosR = ppr;
+        putPosC = ppc;
+        if(bool){
+            createNode();
+        }
+    }
+
+	void setEval(){
+        int evalWithBoard = 0;
+        int evalWithNum = 0;
 		for(int i=0; i<8; i++){
 			for(int j=0; j<8; j++){
-				if(board[i][j] == color)res += board[i][j];
+				if(board[i][j] == color){
+                    evalWithBoard += board[i][j];
+                    evalWithNum++;
+                }
 			}
 		}
-		eval = res;
-	}
+		eval = evalWithBoard;
+    }
+    
+    int getEval(){
+        return eval;
+    }
+
+    byte[][] getBoard(){
+        return board;
+    }
+
+    int getPPC(){
+        return putPosC;
+    }
+
+    int getPPR(){
+        return putPosR;
+    }
 
     boolean canPut(int r, int c, byte putColor){
 		boolean res = false;
@@ -84,7 +119,7 @@ class GameNode{
 				}
 			}
 		}
-        if(res)System.out.println("can put: " + r + " " + c);
+        // if(res)System.out.println("can put: " + r + " " + c);
         return res;
 	}
 
@@ -116,23 +151,60 @@ class GameNode{
         return boardCopy;
     }
 
-    void printBoard(byte[][] board){
+    void printBoard(){
         for(byte[] bytes : board){
             for(byte b : bytes)System.out.printf("%2d ", b);
             System.out.println("");            
         }
+        System.out.println("eval: "+eval);
     }
 
     void createNode(){
+        byte pow = (byte)(color*Math.pow(-1,depth));
         for(int r=0; r<8; r++){
             for(int c=0; c<8; c++){
-                if(canPut(r, c, (byte)(color*Math.pow(-1,depth))))
-                    array.add(new GameNode(put(r, c, (byte)(color*Math.pow(-1,depth))), depth+1, color));
+                if(canPut(r, c, pow))
+                    array.add(new GameNode(put(r, c, pow), depth+1, r, c, false));
             }
         }
     }
 
+    public GameNode returnGameNode(){
+        int minI=0, maxI=0;
+        int minEval=0, maxEval=0;
+        for(int i=0; i<array.size(); i++){
+            int eval=array.get(i).getEval();
+            if(i==0){
+                minI=i; maxI=i;
+                minEval=eval; maxEval=eval;
+            }else{
+                if(eval > maxEval){
+                    maxEval = eval;
+                    maxI = i;
+                }
+                else if(eval < minEval){
+                    minEval = eval;
+                    minI = i;
+                }
+            }
+        }
+        if(color == (byte)(color*Math.pow(-1,depth)))return array.get(maxI);
+        else return array.get(minI);
+    }
+
     public static void main(String args[]){
-        new GameNode(Integer.parseInt(args[0]));
+        byte[][] firstBoard = {
+            {0,0,0,0,0,0,0,-1},
+            {0,0,0,0,0,1,0,-1},
+            {0,1,0,0,1,1,1,-1},
+            {0,-1,1,-1,-1,-1,0,1},
+            {0,0,-1,1,-1,1,1,1},
+            {0,0,1,-1,1,1,0,0},
+            {0,1,1,0,0,1,0,0},
+            {0,-1,1,0,0,0,0,0},
+        };
+        GameNode root = new GameNode(firstBoard, Integer.parseInt(args[0]), Byte.parseByte(args[1]));
+        GameNode next = root.returnGameNode();
+        System.out.println("c: "+next.getPPC()+" r: "+next.getPPR());
     }
 }

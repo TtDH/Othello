@@ -1,7 +1,9 @@
 gen,1,1
-WHITE,7,3
-me,11,2
-BLACK,4,5
+WHITE,8,3
+week,4,6
+depth1,6,4
+me,16,3
+BLACK,4,6
 titi,0,1
-you,2,13
+you,3,18
 takano,1,1

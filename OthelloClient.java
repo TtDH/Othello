@@ -10,20 +10,22 @@ public class OthelloClient extends JFrame{
     final static int BLACK = 1;
     final static int WHITE = -1;
 
-    private Socket socket;
-    private BufferedReader br;
-    private PrintWriter pw;    
-    private byte color;
-    private byte[][] board = new byte[8][8];
-    private JTextField tf;
-    private JTextArea ta;
-    private JLabel label;
-    private OthelloCanvas canvas;
-	private String username = "";
+    protected Socket socket;
+    protected BufferedReader br;
+    protected PrintWriter pw;    
+    protected byte color;
+    protected byte[][] board = new byte[8][8];
+    protected JTextField tf;
+    protected JTextArea ta;
+    protected JLabel label;
+    protected OthelloCanvas canvas;
+	protected String username = "";
+	private int numOfMoves;
 	
 	public ArrayList<GameNode> array = new ArrayList<GameNode>();
 
     public OthelloClient(String host, int port, String username) {
+		numOfMoves=0;
 		this.username = username;
 		//setTitle(username);
 		try{
@@ -94,9 +96,7 @@ public class OthelloClient extends JFrame{
 		return board;
 	}
 
-    private void mainLoop(){
-		Random rand = new Random();
-		array.add(new GameNode(board, 0, color));
+    protected void mainLoop(){
 		try{
 		    pw.println("NICK "+username);
 		    pw.flush();
@@ -107,7 +107,10 @@ public class OthelloClient extends JFrame{
 				setTitle(username+"(BLACK)");
 		    }else{
 				setTitle(username+"(WHITE)");
-		    }
+			}
+			GameNode root;
+			// 初期化してないエラー避け
+			root = new GameNode();
 		    while(true){
 				String message = br.readLine();
 				stn = new StringTokenizer(message," ",false);
@@ -122,10 +125,14 @@ public class OthelloClient extends JFrame{
 						for(int j=0;j<8;j++){
 						    board[i][j] = Byte.parseByte(stn.nextToken());
 						}
-				    }
+					}
+
+					root = new GameNode(board, 0, color);
+
 				    canvas.repaint();
 				    continue;
-				}if(com.equals("END")){
+				}
+				if(com.equals("END")){
 				    //System.out.println(message);
 				    label.setText(message);
 				    //setMessage("==System==:"+message);
@@ -135,21 +142,20 @@ public class OthelloClient extends JFrame{
 				    return;
 				}if(com.equals("TURN")){
 				    byte c = Byte.parseByte(stn.nextToken());
+					numOfMoves++;
 				    if(c==color){
 						label.setText("Your Turn");
+
+						int pr = root.returnGameNode().getPPR();
+						int pc = root.returnGameNode().getPPC();
+						putPiece(pr, pc);
+						
+						System.out.println("numOfMoves: "+numOfMoves);
 				    }else{
 						label.setText("Enemy Turn");
 				    }
 				    continue;
 				}
-
-				/*
-					// put randomly
-					int x = rand.nextInt(8);
-					int y = rand.nextInt(8);
-					putPiece(x,y);
-				*/
-
 				System.out.println(message);
 		    }
 		}catch(IOException e){
@@ -157,7 +163,7 @@ public class OthelloClient extends JFrame{
 		}
     }
 
-    private void setMessage(String str){
+    protected void setMessage(String str){
 		ta.append(str+"\n");
 		int len = ta.getText().length();
 		ta.setCaretPosition(len); 
