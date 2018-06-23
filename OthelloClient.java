@@ -145,12 +145,13 @@ public class OthelloClient extends JFrame{
 					numOfMoves++;
 				    if(c==color){
 						label.setText("Your Turn");
-
-						int pr = root.returnGameNode().getPPR();
-						int pc = root.returnGameNode().getPPC();
+						GameNode next = root.returnGameNode();
+						if(next == null)continue;
+						int pr = next.getPPR();
+						int pc = next.getPPC();
 						putPiece(pr, pc);
-						
-						System.out.println("numOfMoves: "+numOfMoves);
+
+						// System.out.println("numOfMoves: "+numOfMoves);
 				    }else{
 						label.setText("Enemy Turn");
 				    }

@@ -51,10 +51,10 @@ class GameNode{
         setEval();
         array = new ArrayList<GameNode>();
         createNode();
-        // for(GameNode gn : array){
-            // System.out.println("\teval: " + gn.getEval());
-        // }
-        // System.out.println("return Node's eval: " + returnGameNode().getEval());
+        for(GameNode gn : array){
+            System.out.println("\teval: " + gn.getEval());
+        }
+        if(returnGameNode()!=null)System.out.println("return Node's eval: " + returnGameNode().getEval());
     }
 
     // root以外の生成時に使うコンストラクタ
@@ -70,17 +70,19 @@ class GameNode{
     }
 
 	void setEval(){
-        int evalWithBoard = 0;
-        int evalWithNum = 0;
-		for(int i=0; i<8; i++){
-			for(int j=0; j<8; j++){
-				if(board[i][j] == color){
-                    evalWithBoard += board[i][j];
-                    evalWithNum++;
-                }
+        // 行動価値
+        int putStone = evalBoard[putPosR][putPosC];
+        // 自分の石の数
+        int stoneNum = 0;
+        // 着手可能数
+        int canPutNum = 0;
+		for(int r=0; r<8; r++){
+			for(int c=0; c<8; c++){
+                if(board[r][c] == color)stoneNum++;
+                if(canPut(r, c, color))canPutNum++;
 			}
 		}
-		eval = evalWithBoard;
+		eval = 3*putStone + stoneNum + canPutNum;
     }
     
     int getEval(){
@@ -170,6 +172,7 @@ class GameNode{
     }
 
     public GameNode returnGameNode(){
+        if(array.size() == 0)return null;
         int minI=0, maxI=0;
         int minEval=0, maxEval=0;
         for(int i=0; i<array.size(); i++){
