@@ -1,53 +1,40 @@
 import java.util.ArrayList;
 
 class GameNode{
-    private static OthelloClient oc;
+    final int MIDDLE_NUM = 10;
+    final int FINISH_NUM = 48;
+
     final static byte BLACK = 1;
     final static byte WHITE = -1;
     private static byte color = BLACK;
     private ArrayList<GameNode> array;
     private int putPosC;
     private int putPosR;
+    private int numOfMoves;
 
     private byte[][] board;
     private int depth;
     private int eval;
 	static final byte[][] evalBoard = {
-		{30,-12,0,-1,-1,0,-12,30},
+		{45,-12,0,-1,-1,0,-12,45},
 		{-12,-15,-3,-3,-3,-3,-15,-12},
 		{0,-3,0,-1,-1,0,-3,0},
 		{-1,-3,-1,-1,-1,-1,-3,-1},
 		{-1,-3,-1,-1,-1,-1,-3,-1},
 		{0,-3,0,-1,-1,0,-3,0},
 		{-12,-15,-3,-3,-3,-3,-15,-12},
-		{30,-12,0,-1,-1,0,-12,30},
+		{45,-12,0,-1,-1,0,-12,45},
 	};
 
-    // テスト用、colorの設定はあくまで初回生成時のみ
-    /*
-    GameNode(int d, byte color, boolean bool, int ppr, int ppc){
-        depth = d;
-        this.color = color;
-        setEval();
-        array = new ArrayList<GameNode>();
-        putPosR = ppr;
-        putPosC = ppc;
-        if(bool){
-            createNode();
-            for (GameNode gn : array) {
-                gn.printBoard();    
-            }
-        }
-    }
-    */
     // 空生成用コンストラクタ
     GameNode(){};
     
     // root生成時に使うコンストラクタ
-    GameNode(byte[][] b, int d, byte c){
+    GameNode(byte[][] b, int d, byte c, int n){
         board = b;  // ShallowCopy
         depth = d;
         color = c;
+        numOfMoves = n;
         setEval();
         array = new ArrayList<GameNode>();
         createNode();
@@ -58,31 +45,54 @@ class GameNode{
     }
 
     // root以外の生成時に使うコンストラクタ
-    GameNode(byte[][] b, int d, int ppr, int ppc, boolean bool){
+    GameNode(byte[][] b, int d, int ppr, int ppc, int n){
         board = b;
-        setEval();
         depth = d;
+        setEval();
         putPosR = ppr;
         putPosC = ppc;
-        if(bool){
+        numOfMoves = n;
+        array = new ArrayList<GameNode>();
+        if(depth < OthelloClient.limitDepth){
             createNode();
         }
     }
 
 	void setEval(){
-        // 行動価値
-        int putStone = evalBoard[putPosR][putPosC];
+        // 盤面評価
+        int myBoardEval = 0;
+        int enemyBoardEval = 0;
         // 自分の石の数
-        int stoneNum = 0;
+        int myStoneNum = 0;
+        int enemyStoneNum = 0;
         // 着手可能数
-        int canPutNum = 0;
+        int myCanPutNum = 0;
+        int enemyCanPutNum = 0;
+
 		for(int r=0; r<8; r++){
 			for(int c=0; c<8; c++){
-                if(board[r][c] == color)stoneNum++;
-                if(canPut(r, c, color))canPutNum++;
+                if(board[r][c] == color){
+                    myStoneNum++;
+                    myBoardEval += evalBoard[r][c];
+                }else if(board[r][c] == -1 * color){
+                    enemyStoneNum++;
+                    enemyBoardEval += evalBoard[r][c];
+                }
+                if(canPut(r, c, color))myCanPutNum++;
+                else if(canPut(r,c,(byte)(-1*color)))enemyCanPutNum++;
 			}
-		}
-		eval = 3*putStone + stoneNum + canPutNum;
+        }
+        int x0, x1, x2;
+        if(numOfMoves < MIDDLE_NUM){
+            x0=1; x1=1; x2=3;
+        }else if(numOfMoves >= MIDDLE_NUM  && numOfMoves < FINISH_NUM){
+            x0=5; x1=1; x2=1;
+        }else{
+            x0=1; x1=5; x2=1;
+        }
+        eval = x0*(myBoardEval - enemyBoardEval) 
+                + x1*(myStoneNum - enemyStoneNum) 
+                + x2*(myCanPutNum - enemyCanPutNum);
     }
     
     int getEval(){
@@ -91,6 +101,14 @@ class GameNode{
 
     byte[][] getBoard(){
         return board;
+    }
+
+    int getDepth(){
+        return depth;
+    }
+
+    ArrayList<GameNode> getArray(){
+        return array;
     }
 
     int getPPC(){
@@ -162,11 +180,11 @@ class GameNode{
     }
 
     void createNode(){
-        byte pow = (byte)(color*Math.pow(-1,depth));
+        byte turn = (byte)(color*Math.pow(-1,depth));
         for(int r=0; r<8; r++){
             for(int c=0; c<8; c++){
-                if(canPut(r, c, pow))
-                    array.add(new GameNode(put(r, c, pow), depth+1, r, c, false));
+                if(canPut(r, c, turn))
+                    array.add(new GameNode(put(r, c, turn), depth+1, r, c, numOfMoves+1));
             }
         }
     }
@@ -174,9 +192,9 @@ class GameNode{
     public GameNode returnGameNode(){
         if(array.size() == 0)return null;
         int minI=0, maxI=0;
-        int minEval=0, maxEval=0;
+        double minEval=0, maxEval=0;
         for(int i=0; i<array.size(); i++){
-            int eval=array.get(i).getEval();
+            double eval=array.get(i).getEval();
             if(i==0){
                 minI=i; maxI=i;
                 minEval=eval; maxEval=eval;
@@ -206,7 +224,7 @@ class GameNode{
             {0,1,1,0,0,1,0,0},
             {0,-1,1,0,0,0,0,0},
         };
-        GameNode root = new GameNode(firstBoard, Integer.parseInt(args[0]), Byte.parseByte(args[1]));
+        GameNode root = new GameNode(firstBoard, Integer.parseInt(args[0]), Byte.parseByte(args[1]), 0);
         GameNode next = root.returnGameNode();
         System.out.println("c: "+next.getPPC()+" r: "+next.getPPR());
     }

@@ -21,6 +21,7 @@ public class OthelloClient extends JFrame{
     protected OthelloCanvas canvas;
 	protected String username = "";
 	private int numOfMoves;
+	public static int limitDepth=1;
 	
 	public ArrayList<GameNode> array = new ArrayList<GameNode>();
 
@@ -96,6 +97,28 @@ public class OthelloClient extends JFrame{
 		return board;
 	}
 
+	int miniMax(GameNode gn){
+		if(gn.getDepth() == limitDepth)return gn.getEval();
+		int best=0;
+		int index=0;
+		for(int i=0; i<gn.getArray().size(); i++){
+			int val;
+			val = miniMax(gn.getArray().get(i));
+			if(i==0)best=val;
+			if(gn.getDepth()%2==0 && best<val){
+				best=val;
+				index = i;
+			}
+			else if(gn.getDepth()%2==1 && best>val){
+				best=val;
+				index = i;
+			}
+		}
+		// rootNodeならそのインデックスを返す
+		if(gn.getDepth() == 0)return index;
+		else return best;
+	}
+
     protected void mainLoop(){
 		try{
 		    pw.println("NICK "+username);
@@ -127,7 +150,7 @@ public class OthelloClient extends JFrame{
 						}
 					}
 
-					root = new GameNode(board, 0, color);
+					root = new GameNode(board, 0, color, numOfMoves);
 
 				    canvas.repaint();
 				    continue;
@@ -136,16 +159,19 @@ public class OthelloClient extends JFrame{
 				    //System.out.println(message);
 				    label.setText(message);
 				    //setMessage("==System==:"+message);
-				    continue;
-				}if(com.equals("CLOSE")){
+				    break;
+				}
+				if(com.equals("CLOSE")){
 				    label.setText(message);
 				    return;
-				}if(com.equals("TURN")){
+				}
+				if(com.equals("TURN")){
 				    byte c = Byte.parseByte(stn.nextToken());
 					numOfMoves++;
 				    if(c==color){
 						label.setText("Your Turn");
-						GameNode next = root.returnGameNode();
+						int index = miniMax(root);
+						GameNode next = root.getArray().get(index);
 						if(next == null)continue;
 						int pr = next.getPPR();
 						int pc = next.getPPC();
@@ -160,8 +186,9 @@ public class OthelloClient extends JFrame{
 				System.out.println(message);
 		    }
 		}catch(IOException e){
-		    System.exit(0);
+		    System.exit(1);
 		}
+		System.exit(0);
     }
 
     protected void setMessage(String str){

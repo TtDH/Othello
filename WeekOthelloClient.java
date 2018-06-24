@@ -53,7 +53,7 @@ public class WeekOthelloClient extends OthelloClient{
 				    //System.out.println(message);
 				    label.setText(message);
 				    //setMessage("==System==:"+message);
-				    continue;
+				    break;
 				}if(com.equals("CLOSE")){
 				    label.setText(message);
 				    return;
@@ -72,6 +72,7 @@ public class WeekOthelloClient extends OthelloClient{
 		}catch(IOException e){
 		    System.exit(0);
 		}
+		System.exit(0);
     }
 
     public static void main(String args[]) {
