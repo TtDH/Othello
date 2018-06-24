@@ -1,23 +1,13 @@
-class Test1{
-    Test1(){
-        System.out.println("Hello from Test1");
-        new Test2();
+class Test{
+    Test(){
+        byte b = 24;
+        System.out.println("res: " + (byte)(-1*b));
     }
 
     public static void main(String args[]){
-        new Test1();
+        new Test();
     }
 }
 
-
-class Test2{
-    Test2(){
-        System.out.println("Hello from Test2");
-    }
-
-    public static void main(String args[]){
-        System.out.println("It's Test2 main()");
-    }
-}
 
 

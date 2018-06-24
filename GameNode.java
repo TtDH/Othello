@@ -6,7 +6,7 @@ class GameNode{
 
     final static byte BLACK = 1;
     final static byte WHITE = -1;
-    private static byte color = BLACK;
+    private byte color;
     private ArrayList<GameNode> array;
     private int putPosC;
     private int putPosR;
@@ -45,17 +45,23 @@ class GameNode{
     }
 
     // root以外の生成時に使うコンストラクタ
-    GameNode(byte[][] b, int d, int ppr, int ppc, int n){
+    GameNode(byte[][] b, int d, byte c, int ppr, int ppc, int n){
         board = b;
         depth = d;
-        setEval();
+        color = c;
         putPosR = ppr;
         putPosC = ppc;
         numOfMoves = n;
         array = new ArrayList<GameNode>();
         if(depth < OthelloClient.limitDepth){
             createNode();
+            if(array.isEmpty()){
+                depth++;
+                color = (byte)(-1*color);
+                createNode();
+            }
         }
+        setEval();
     }
 
 	void setEval(){
@@ -82,17 +88,18 @@ class GameNode{
                 else if(canPut(r,c,(byte)(-1*color)))enemyCanPutNum++;
 			}
         }
-        int x0, x1, x2;
+        double x0, x1, x2;
         if(numOfMoves < MIDDLE_NUM){
-            x0=1; x1=1; x2=3;
+            x0=0.5; x1=1; x2=3;
         }else if(numOfMoves >= MIDDLE_NUM  && numOfMoves < FINISH_NUM){
-            x0=5; x1=1; x2=1;
+            x0=2; x1=1; x2=1;
         }else{
-            x0=1; x1=5; x2=1;
+            x0=0.5; x1=3; x2=1;
         }
-        eval = x0*(myBoardEval - enemyBoardEval) 
-                + x1*(myStoneNum - enemyStoneNum) 
-                + x2*(myCanPutNum - enemyCanPutNum);
+        // myBoardEvalだけでよいのでは？
+        eval = (int)x0*(myBoardEval - enemyBoardEval)
+                + (int)x1*(myStoneNum - enemyStoneNum) 
+                + (int)x2*(myCanPutNum - enemyCanPutNum);
     }
     
     int getEval(){
@@ -184,7 +191,7 @@ class GameNode{
         for(int r=0; r<8; r++){
             for(int c=0; c<8; c++){
                 if(canPut(r, c, turn))
-                    array.add(new GameNode(put(r, c, turn), depth+1, r, c, numOfMoves+1));
+                    array.add(new GameNode(put(r, c, turn), depth+1, (byte)(-1*color), r, c, numOfMoves+1));
             }
         }
     }
